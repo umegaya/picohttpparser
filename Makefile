@@ -25,8 +25,26 @@
 
 CC?=gcc
 PROVE?=prove
+OS := $(shell uname -s)
+INSTALL_PATH?=/usr/local
+SO_HEADER=picohttpparser.h
+ifeq ($(OS),Linux)
+SO_NAME=libpicohttpparser.so
+SO_CFLAGS=-shared -O3 -fPIC
+SO_LDFLAGS=
+endif
+ifeq ($(OS),Darwin)
+SO_NAME=libpicohttpparser.dylib
+SO_CFLAGS=-O3 -dynamiclib
+SO_LDFLAGS=
+endif
 
 all:
+
+so: $(SO_NAME)
+
+$(SO_NAME): picohttpparser.c
+	$(CC) -Wall $(SO_CFLAGS) $(SO_LDFLAGS) -o $@ $^
 
 test: test-bin
 	$(PROVE) -v ./test-bin
@@ -36,5 +54,12 @@ test-bin: picohttpparser.c picotest/picotest.c test.c
 
 clean:
 	rm -f test-bin
+
+clean_so:
+	rm -f $(SO_NAME)
+
+install_so:
+	install -C -m 644 $(SO_NAME) $(INSTALL_PATH)/lib
+	install -C -m 644 $(SO_HEADER)  $(INSTALL_PATH)/include
 
 .PHONY: test
